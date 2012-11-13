@@ -45,6 +45,11 @@
 #include <sys/types.h>
 #endif
 
+#if defined(__APPLE__) 
+#define __b64_ntop b64_ntop
+#define __b64_pton b64_pton
+#endif
+
 #include <string.h>
 #include <unistd.h>
 #include "rfb/rfbconfig.h"
