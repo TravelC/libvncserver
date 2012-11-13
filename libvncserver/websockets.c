@@ -35,6 +35,17 @@
 /* errno */
 #include <errno.h>
 
+#if defined(__APPLE__)
+#include <libkern/OSByteOrder.h>
+#define le32toh OSSwapLittleToHostInt32
+#define htole32 OSSwapHostToLittleInt32
+#define bswap_16 OSSwapInt16
+#define bswap_32 OSSwapInt32
+#define bswap_64 OSSwapInt64
+#else
+#include <byteswap.h> 
+#endif
+
 #ifdef LIBVNCSERVER_HAVE_ENDIAN_H
 #include <endian.h>
 #elif LIBVNCSERVER_HAVE_SYS_ENDIAN_H
@@ -56,11 +67,21 @@
 #include "rfbssl.h"
 #include "rfbcrypto.h"
 
-#define WS_NTOH64(n) htobe64(n)
-#define WS_NTOH32(n) htobe32(n)
-#define WS_NTOH16(n) htobe16(n)
-#define WS_HTON64(n) htobe64(n)
-#define WS_HTON16(n) htobe16(n)
+#if defined(__BYTE_ORDER) && defined(__BIG_ENDIAN) && __BYTE_ORDER == __BIG_ENDIAN
+    #define WS_NTOH64(n) (n)
+    #define WS_NTOH32(n) (n)
+    #define WS_NTOH16(n) (n)
+    #define WS_HTON64(n) (n)
+    #define WS_HTON16(n) (n)
+#else
+    #define WS_NTOH64(n) bswap_64(n)
+    #define WS_NTOH32(n) bswap_32(n)
+    #define WS_NTOH16(n) bswap_16(n)
+    #define WS_HTON64(n) bswap_64(n)
+    #define WS_HTON16(n) bswap_16(n)
+#endif
+
+
 
 #define B64LEN(__x) (((__x + 2) / 3) * 12 / 3)
 #define WSHLENMAX 14  /* 2 + sizeof(uint64_t) + sizeof(uint32_t) */
