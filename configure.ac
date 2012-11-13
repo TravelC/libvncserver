@@ -39,6 +39,12 @@ if test "x$HAVE_B64_IN_LIBC" != "xtrue"; then
 	if test "x$HAVE_B64_IN_LIBRESOLV" = "xtrue"; then
 		RESOLV_LIB="-lresolv"
 		HAVE_B64="true"
+	else
+		AC_CHECK_LIB(resolv, res_9_b64_ntop, HAVE_B64_IN_OSXLIBRESOLV="true", HAVE_B64_IN_OSXLIBRESOLV="false")
+		if test "x$HAVE_B64_IN_OSXLIBRESOLV" = "xtrue"; then
+			RESOLV_LIB="-lresolv"
+			HAVE_B64="true"
+		fi
 	fi
 else
 	HAVE_B64="true"
