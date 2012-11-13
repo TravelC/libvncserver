@@ -177,15 +177,21 @@ rfbHttpCheckFds(rfbScreenInfoPtr rfbScreen)
 
     FD_ZERO(&fds);
     FD_SET(rfbScreen->httpListenSock, &fds);
+ #ifdef LIBVNCSERVER_IPv6
     if (rfbScreen->httpListen6Sock >= 0) {
 	FD_SET(rfbScreen->httpListen6Sock, &fds);
     }
+ #endif 
     if (rfbScreen->httpSock >= 0) {
 	FD_SET(rfbScreen->httpSock, &fds);
     }
     tv.tv_sec = 0;
     tv.tv_usec = 0;
+#ifdef LIBVNCSERVER_IPv6
     nfds = select(max(rfbScreen->httpListen6Sock, max(rfbScreen->httpSock,rfbScreen->httpListenSock)) + 1, &fds, NULL, NULL, &tv);
+#else 
+	nfds = select(max(rfbScreen->httpSock,rfbScreen->httpListenSock) + 1, &fds, NULL, NULL, &tv);
+#endif 
     if (nfds == 0) {
 	return;
     }
@@ -202,7 +208,11 @@ rfbHttpCheckFds(rfbScreenInfoPtr rfbScreen)
 	httpProcessInput(rfbScreen);
     }
 
+#ifdef LIBVNCSERVER_IPv6
     if (FD_ISSET(rfbScreen->httpListenSock, &fds) || FD_ISSET(rfbScreen->httpListen6Sock, &fds)) {
+#else 
+	if (FD_ISSET(rfbScreen->httpListenSock, &fds)) {
+#endif
 	if (rfbScreen->httpSock >= 0) close(rfbScreen->httpSock);
 
 	if(FD_ISSET(rfbScreen->httpListenSock, &fds)) {
@@ -211,12 +221,14 @@ rfbHttpCheckFds(rfbScreenInfoPtr rfbScreen)
 	      return;
 	    }
 	}
+#ifdef LIBVNCSERVER_IPv6
 	else if(FD_ISSET(rfbScreen->httpListen6Sock, &fds)) {
 	    if ((rfbScreen->httpSock = accept(rfbScreen->httpListen6Sock, (struct sockaddr *)&addr, &addrlen)) < 0) {
 	      rfbLogPerror("httpCheckFds: accept");
 	      return;
 	    }
 	}
+#endif
 
 #ifdef USE_LIBWRAP
 	char host[1024];
